@@ -473,3 +473,26 @@ a.opcion:hover {
   color: #4a4a47;
   margin: 12px 0 0;
 }
+
+/* ---------- Pantallas pequeñas (RNF-MOV-01) ---------- */
+@media (max-width: 700px) {
+  nav {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 8px 16px;
+  }
+  nav div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+  }
+  nav a,
+  nav button {
+    margin-left: 0;
+  }
+  table {
+    display: block;
+    overflow-x: auto;
+  }
+}
