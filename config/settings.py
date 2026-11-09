@@ -10,22 +10,30 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
+def env_bool(nombre, defecto=False):
+    return os.environ.get(nombre, str(defecto)).strip().lower() in ('1', 'true', 'si', 'sí', 'yes')
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-7_r=tc@%9%&m%qco9(+u7tk_(n1j7@fu67d38abw2&9+i!tk5m'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+SECRET_KEY = os.environ.get(
+    'DJANGO_SECRET_KEY',
+    'clave-solo-para-desarrollo-local-cambiar-en-produccion',
+)
 
-ALLOWED_HOSTS = []
+DEBUG = env_bool('DJANGO_DEBUG', True)
+
+ALLOWED_HOSTS = [h.strip() for h in os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',') if h.strip()]
+
+REGISTRO_ABIERTO = env_bool('DJANGO_REGISTRO_ABIERTO', True)
+
+if not DEBUG and SECRET_KEY.startswith('clave-solo-para-desarrollo'):
+    raise RuntimeError('Con DJANGO_DEBUG=False se debe definir DJANGO_SECRET_KEY.')
 
 
 # Application definition
@@ -63,6 +71,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'inventario.context.opciones',
             ],
         },
     },
@@ -77,11 +86,12 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'inventario_rg_beauty',
-        'USER': 'root',
-        'PASSWORD': '123456',
-        'HOST': 'localhost',
-        'PORT': '3306'
+        'NAME': os.environ.get('DB_NAME', 'inventario_rg_beauty'),
+        'USER': os.environ.get('DB_USER', 'inventario_app'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+        'HOST': os.environ.get('DB_HOST', 'localhost'),
+        'PORT': os.environ.get('DB_PORT', '3306'),
+        'OPTIONS': {'charset': 'utf8mb4'},
     }
 }
 
@@ -95,6 +105,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {'min_length': 10},
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
@@ -132,3 +143,36 @@ LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'home'
 
 LOGOUT_REDIRECT_URL = 'login'
+
+
+# ---------- Seguridad (OWASP A02, A05, A07) ----------
+
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_AGE = 60 * 60 * 8
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+CSRF_COOKIE_SAMESITE = 'Lax'
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
+SECURE_REFERRER_POLICY = 'same-origin'
+
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# ---------- Registro de eventos de seguridad ----------
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {'simple': {'format': '{asctime} {levelname} {name} {message}', 'style': '{'}},
+    'handlers': {'console': {'class': 'logging.StreamHandler', 'formatter': 'simple'}},
+    'loggers': {
+        'django.security': {'handlers': ['console'], 'level': 'WARNING', 'propagate': False},
+        'inventario.seguridad': {'handlers': ['console'], 'level': 'INFO', 'propagate': False},
+    },
+}
