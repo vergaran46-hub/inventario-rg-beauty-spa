@@ -7,6 +7,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.inicio, name='inicio'),
     path('movimiento/', views.movimiento_crear, name='movimiento_crear'),
+    path('historial/', views.historial, name='historial'),
     path('productos/', views.home, name='home'),
     path('mis-productos/', views.mis_productos, name='mis_productos'),
     path('producto/<int:pk>/', views.producto_detalle, name='producto_detalle'),
@@ -17,6 +18,6 @@ urlpatterns = [
     path('registro/', views.registro, name='registro'),
     path('cuenta/', views.perfil, name='perfil'),
     path('cuenta/password/', views.CambiarPasswordView.as_view(), name='cambiar_password'),
-    path('login/', auth_views.LoginView.as_view(template_name='inventario/login.html'), name='login'),
+    path('login/', views.LoginSeguroView.as_view(), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
 ]

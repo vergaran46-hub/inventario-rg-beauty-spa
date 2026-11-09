@@ -1,15 +1,28 @@
+import logging
+from django.conf import settings
+from django.http import Http404
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.views import PasswordChangeView
+from django.contrib.auth.views import PasswordChangeView, LoginView
+from django.core.cache import cache
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Q, ProtectedError
 from django.urls import reverse_lazy
-from .models import Producto, Categoria, Etiqueta
+from .models import Producto, Categoria, Etiqueta, Movimiento
 from .forms import ProductoForm, RegistroForm, PerfilForm, CategoriaForm, EtiquetaForm, MovimientoForm
+
+seguridad = logging.getLogger('inventario.seguridad')
+
+MAX_INTENTOS_LOGIN = 5
+BLOQUEO_SEGUNDOS = 15 * 60
+
+
+def _ip(request):
+    return request.META.get('REMOTE_ADDR', 'desconocida')
 
 
 # ---------- Inicio ----------
@@ -32,20 +45,39 @@ def movimiento_crear(request):
         if form.is_valid():
             movimiento = form.save(commit=False)
             movimiento.usuario = request.user
-            producto = movimiento.producto
             with transaction.atomic():
-                if movimiento.tipo == 'ENTRADA':
-                    producto.stock_actual += movimiento.cantidad
+                producto = Producto.objects.select_for_update().get(pk=movimiento.producto_id)
+                if movimiento.tipo == 'SALIDA' and movimiento.cantidad > producto.stock_actual:
+                    form.add_error('cantidad', f'Hay {producto.stock_actual} unidades y se piden {movimiento.cantidad}.')
                 else:
-                    producto.stock_actual -= movimiento.cantidad
-                producto.save()
-                movimiento.save()
-            messages.success(request, f'Listo: ahora quedan {producto.stock_actual} unidades de {producto.nombre}.')
-            return redirect('inicio')
+                    if movimiento.tipo == 'ENTRADA':
+                        producto.stock_actual += movimiento.cantidad
+                    else:
+                        producto.stock_actual -= movimiento.cantidad
+                    producto.save(update_fields=['stock_actual'])
+                    movimiento.save()
+                    seguridad.info('movimiento usuario=%s producto=%s tipo=%s cantidad=%s',
+                                   request.user.pk, producto.pk, movimiento.tipo, movimiento.cantidad)
+                    messages.success(request, f'Listo: ahora quedan {producto.stock_actual} unidades de {producto.nombre}.')
+                    return redirect('inicio')
         messages.error(request, 'Revisa los datos del formulario.')
     else:
         form = MovimientoForm()
     return render(request, 'inventario/movimiento_form.html', {'form': form})
+
+
+@login_required
+def historial(request):
+    movimientos = Movimiento.objects.select_related('producto', 'usuario').order_by('-fecha', '-pk')
+    producto_id = request.GET.get('producto', '')
+    if producto_id.isdigit():
+        movimientos = movimientos.filter(producto_id=producto_id)
+    page_obj = Paginator(movimientos, 10).get_page(request.GET.get('page'))
+    return render(request, 'inventario/historial.html', {
+        'page_obj': page_obj,
+        'productos': Producto.objects.order_by('nombre'),
+        'producto_id': producto_id,
+    })
 
 
 # ---------- Listado (pantalla principal) ----------
@@ -126,6 +158,7 @@ def producto_crear(request):
 def producto_editar(request, pk):
     producto = get_object_or_404(Producto, pk=pk)
     if producto.usuario != request.user:
+        seguridad.warning('acceso denegado usuario=%s producto=%s ip=%s', request.user.pk, producto.pk, _ip(request))
         raise PermissionDenied
     if request.method == 'POST':
         form = ProductoForm(request.POST, instance=producto)
@@ -143,6 +176,7 @@ def producto_editar(request, pk):
 def producto_eliminar(request, pk):
     producto = get_object_or_404(Producto, pk=pk)
     if producto.usuario != request.user:
+        seguridad.warning('acceso denegado usuario=%s producto=%s ip=%s', request.user.pk, producto.pk, _ip(request))
         raise PermissionDenied
     if request.method == 'POST':
         try:
@@ -188,6 +222,8 @@ def grupos(request):
 # ---------- Cuenta de usuario ----------
 
 def registro(request):
+    if not settings.REGISTRO_ABIERTO:
+        raise Http404('El registro de cuentas está deshabilitado.')
     if request.method == 'POST':
         form = RegistroForm(request.POST)
         if form.is_valid():
@@ -219,3 +255,31 @@ class CambiarPasswordView(SuccessMessageMixin, PasswordChangeView):
     template_name = 'inventario/cambiar_password.html'
     success_url = reverse_lazy('perfil')
     success_message = 'Tu contraseña fue actualizada.'
+
+
+class LoginSeguroView(LoginView):
+    template_name = 'inventario/login.html'
+
+    def _clave(self, request):
+        usuario = (request.POST.get('username') or '').strip().lower()
+        return f'login:{usuario}:{_ip(request)}'
+
+    def post(self, request, *args, **kwargs):
+        clave = self._clave(request)
+        if cache.get(clave, 0) >= MAX_INTENTOS_LOGIN:
+            seguridad.warning('login bloqueado clave=%s', clave)
+            form = self.get_form()
+            form.add_error(None, 'Demasiados intentos fallidos. Espera 15 minutos e inténtalo de nuevo.')
+            return self.render_to_response(self.get_context_data(form=form), status=429)
+        return super().post(request, *args, **kwargs)
+
+    def form_invalid(self, form):
+        clave = self._clave(self.request)
+        cache.set(clave, cache.get(clave, 0) + 1, BLOQUEO_SEGUNDOS)
+        seguridad.warning('login fallido clave=%s', clave)
+        return super().form_invalid(form)
+
+    def form_valid(self, form):
+        cache.delete(self._clave(self.request))
+        seguridad.info('login correcto usuario=%s', form.get_user().pk)
+        return super().form_valid(form)

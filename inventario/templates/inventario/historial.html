@@ -1,0 +1,40 @@
+{% extends 'inventario/base.html' %}
+{% block titulo %}Historial de movimientos{% endblock %}
+{% block contenido %}
+<h1>Historial de movimientos</h1>
+<div class="tarjeta">
+  <form method="get">
+    <label for="producto">Producto</label>
+    <select name="producto" id="producto">
+      <option value="">Todos</option>
+      {% for p in productos %}
+      <option value="{{ p.pk }}" {% if producto_id == p.pk|stringformat:"s" %}selected{% endif %}>{{ p.nombre }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn">Filtrar</button>
+    <a class="btn" href="{% url 'movimiento_crear' %}">+ Registrar entrada o salida</a>
+  </form>
+  <table>
+    <tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th>Motivo</th><th>Cantidad</th><th>Registrado por</th></tr>
+    {% for m in page_obj %}
+    <tr>
+      <td>{{ m.fecha|date:"d/m/Y H:i" }}</td>
+      <td><a href="{% url 'producto_detalle' m.producto.pk %}">{{ m.producto.nombre }}</a></td>
+      <td>{{ m.get_tipo_display }}</td>
+      <td>{{ m.get_motivo_display }}</td>
+      <td>{{ m.cantidad }}</td>
+      <td>{{ m.usuario.username|default:"-" }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="6">Todavía no hay movimientos registrados.</td></tr>
+    {% endfor %}
+  </table>
+  {% if page_obj.has_other_pages %}
+  <p>
+    {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{% if producto_id %}&producto={{ producto_id }}{% endif %}">&laquo; Anterior</a>{% endif %}
+    Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+    {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}{% if producto_id %}&producto={{ producto_id }}{% endif %}">Siguiente &raquo;</a>{% endif %}
+  </p>
+  {% endif %}
+</div>
+{% endblock %}
