@@ -1,0 +1,27 @@
+{% extends 'inventario/base.html' %}
+{% block titulo %}{{ producto.nombre }}{% endblock %}
+{% block contenido %}
+<p><a href="{% url 'home' %}">‹ Volver a los productos</a></p>
+<h1>{{ producto.nombre }}</h1>
+<div class="tarjeta">
+  <p><strong>Grupo:</strong> {{ producto.categoria.nombre|default:"Sin grupo" }}</p>
+  <p><strong>Etiquetas:</strong>
+    {% for e in producto.etiquetas.all %}<span class="etiqueta">{{ e.nombre }}</span> {% empty %}Sin etiquetas{% endfor %}
+  </p>
+  <p><strong>Descripción:</strong> {{ producto.descripcion|default:"Sin descripción" }}</p>
+  <p><strong>Unidades que hay:</strong> {{ producto.stock_actual }}</p>
+  <p><strong>Avisar cuando queden:</strong> {{ producto.stock_minimo }}</p>
+  <p>
+    {% if producto.stock_actual <= producto.stock_minimo %}
+      <span class="alerta">Hay que comprar este producto.</span>
+    {% else %}
+      <span class="ok">El stock es suficiente.</span>
+    {% endif %}
+  </p>
+  <p><strong>Registrado por:</strong> {{ producto.usuario.username|default:"-" }}</p>
+  {% if producto.usuario == user %}
+    <a class="btn" href="{% url 'producto_editar' producto.pk %}">Editar</a>
+    <a class="btn btn-claro" href="{% url 'producto_eliminar' producto.pk %}">Eliminar</a>
+  {% endif %}
+</div>
+{% endblock %}

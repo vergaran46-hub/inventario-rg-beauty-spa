@@ -1,0 +1,32 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ingresar - RG Beauty Spa</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Poppins:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'inventario/css/estilos.css' %}">
+</head>
+<body>
+  <div class="login-fondo">
+    <div class="login-caja">
+      <img src="{% static 'inventario/img/logo_login.jpg' %}" alt="RG Beauty Spa">
+      <h2>Control de inventario</h2>
+      {% if messages %}
+      <ul class="messages">
+        {% for message in messages %}<li class="{{ message.tags }}">{{ message }}</li>{% endfor %}
+      </ul>
+      {% endif %}
+      <form method="post">
+        {% csrf_token %}
+        {% if form.errors %}<p class="error">Usuario o contraseña incorrectos.</p>{% endif %}
+        <input type="text" name="username" placeholder="Usuario" required autofocus>
+        <input type="password" name="password" placeholder="Contraseña" required>
+        <button class="btn" type="submit">Ingresar</button>
+      </form>
+      <p><a href="{% url 'registro' %}">Crear una cuenta</a></p>
+    </div>
+  </div>
+</body>
+</html>

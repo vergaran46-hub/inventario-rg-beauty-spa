@@ -1,0 +1,70 @@
+{% extends 'inventario/base.html' %}
+{% block titulo %}Productos en bodega{% endblock %}
+{% block contenido %}
+<h1>Productos en bodega</h1>
+
+<div class="tarjeta">
+  <form method="get" class="buscador">
+    <input type="text" name="q" value="{{ q }}" placeholder="Busca por nombre o descripción">
+    <select name="categoria">
+      <option value="">Todos los grupos</option>
+      {% for c in categorias %}
+      <option value="{{ c.id }}" {% if categoria_id == c.id|stringformat:"s" %}selected{% endif %}>{{ c.nombre }}</option>
+      {% endfor %}
+    </select>
+    <button class="btn" type="submit">Buscar</button>
+    <a class="btn btn-claro" href="{% url 'producto_crear' %}">+ Agregar un producto</a>
+  </form>
+</div>
+
+<div class="tarjeta">
+  <table>
+    <tr>
+      <th>Producto</th><th>Grupo</th><th>Etiquetas</th><th>Unidades</th><th>Estado</th><th>Dueño</th><th>Acciones</th>
+    </tr>
+    {% for p in page_obj %}
+    <tr>
+      <td><a href="{% url 'producto_detalle' p.pk %}">{{ p.nombre }}</a></td>
+      <td>{{ p.categoria.nombre|default:"Sin grupo" }}</td>
+      <td>{% for e in p.etiquetas.all %}<span class="etiqueta">{{ e.nombre }}</span> {% empty %}-{% endfor %}</td>
+      <td>{{ p.stock_actual }}</td>
+      <td>
+        {% if p.stock_actual <= p.stock_minimo %}
+          <span class="alerta">Hay que comprar</span>
+        {% else %}
+          <span class="ok">Suficiente</span>
+        {% endif %}
+      </td>
+      <td>{{ p.usuario.username|default:"-" }}</td>
+      <td>
+        <a href="{% url 'producto_detalle' p.pk %}">Ver</a>
+        {% if p.usuario == user %}
+          · <a href="{% url 'producto_editar' p.pk %}">Editar</a>
+          · <a href="{% url 'producto_eliminar' p.pk %}">Eliminar</a>
+        {% endif %}
+      </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="7">
+      {% if q or categoria_id %}
+        No se encontraron productos con esa búsqueda.
+      {% else %}
+        Todavía no hay productos. Agrega el primero con el botón de arriba.
+      {% endif %}
+    </td></tr>
+    {% endfor %}
+  </table>
+
+  {% if page_obj.paginator.num_pages > 1 %}
+  <div class="paginacion">
+    {% if page_obj.has_previous %}
+      <a href="?{% if querystring %}{{ querystring }}&amp;{% endif %}page={{ page_obj.previous_page_number }}">‹ Anterior</a>
+    {% endif %}
+    <span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a href="?{% if querystring %}{{ querystring }}&amp;{% endif %}page={{ page_obj.next_page_number }}">Siguiente ›</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

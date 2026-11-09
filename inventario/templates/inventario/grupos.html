@@ -1,0 +1,32 @@
+{% extends 'inventario/base.html' %}
+{% block titulo %}Grupos y etiquetas{% endblock %}
+{% block contenido %}
+<h1>Grupos y etiquetas</h1>
+<p>Los grupos ordenan tus productos (por ejemplo, Facial o Uñas). Las etiquetas son marcas extra (por ejemplo, Frágil).</p>
+
+<div class="tarjeta">
+  <h3>Grupos</h3>
+  <p>
+    {% for c in categorias %}<span class="etiqueta">{{ c.nombre }}</span> {% empty %}Todavía no hay grupos.{% endfor %}
+  </p>
+  <form method="post">
+    {% csrf_token %}
+    {{ form_categoria.as_p }}
+    <button class="btn" type="submit" name="guardar_categoria">Agregar grupo</button>
+  </form>
+</div>
+
+<div class="tarjeta">
+  <h3>Etiquetas</h3>
+  <p>
+    {% for e in etiquetas %}<span class="etiqueta">{{ e.nombre }}</span> {% empty %}Todavía no hay etiquetas.{% endfor %}
+  </p>
+  <form method="post">
+    {% csrf_token %}
+    {{ form_etiqueta.as_p }}
+    <button class="btn" type="submit" name="guardar_etiqueta">Agregar etiqueta</button>
+  </form>
+</div>
+
+<p><a class="btn btn-claro" href="{% url 'producto_crear' %}">Ir a agregar un producto</a></p>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends 'inventario/base.html' %}
+{% block titulo %}Mis productos{% endblock %}
+{% block contenido %}
+<h1>Mis productos</h1>
+<div class="tarjeta">
+  <p><a class="btn" href="{% url 'producto_crear' %}">+ Agregar un producto</a></p>
+  <table>
+    <tr><th>Producto</th><th>Grupo</th><th>Etiquetas</th><th>Unidades</th><th>Acciones</th></tr>
+    {% for p in productos %}
+    <tr>
+      <td><a href="{% url 'producto_detalle' p.pk %}">{{ p.nombre }}</a></td>
+      <td>{{ p.categoria.nombre|default:"Sin grupo" }}</td>
+      <td>{% for e in p.etiquetas.all %}<span class="etiqueta">{{ e.nombre }}</span> {% empty %}-{% endfor %}</td>
+      <td>{{ p.stock_actual }}</td>
+      <td>
+        <a href="{% url 'producto_editar' p.pk %}">Editar</a> ·
+        <a href="{% url 'producto_eliminar' p.pk %}">Eliminar</a>
+      </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="5">Todavía no has creado productos.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}

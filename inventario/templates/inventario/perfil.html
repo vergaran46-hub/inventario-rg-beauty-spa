@@ -1,0 +1,21 @@
+{% extends 'inventario/base.html' %}
+{% block titulo %}Mi cuenta{% endblock %}
+{% block contenido %}
+<h1>Mi cuenta</h1>
+<div class="tarjeta">
+  <p><strong>Usuario:</strong> {{ user.username }}</p>
+  <p><strong>Productos que has registrado:</strong> {{ total }}</p>
+</div>
+<div class="tarjeta">
+  <h3>Mis datos</h3>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button class="btn" type="submit">Guardar cambios</button>
+  </form>
+</div>
+<div class="tarjeta">
+  <h3>Contraseña</h3>
+  <a class="btn btn-claro" href="{% url 'cambiar_password' %}">Cambiar mi contraseña</a>
+</div>
+{% endblock %}

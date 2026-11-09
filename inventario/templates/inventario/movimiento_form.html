@@ -1,0 +1,87 @@
+{% extends 'inventario/base.html' %}
+{% block titulo %}Registrar entrada o salida{% endblock %}
+{% block contenido %}
+<h1 class="saludo">Registrar entrada o salida</h1>
+<p class="saludo-sub">Responde estas 4 preguntas y el stock se actualiza solo.</p>
+
+<div class="mov-grid">
+  <form method="post" class="mov-form">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    <div class="paso">
+      <label for="{{ form.producto.id_for_label }}"><span class="num">1</span> ¿Qué producto es?</label>
+      {{ form.producto }}
+      {{ form.producto.errors }}
+    </div>
+
+    <fieldset class="paso">
+      <legend><span class="num">2</span> ¿Qué pasó con el producto?</legend>
+      <div class="tipos">
+        {% for radio in form.tipo %}
+          {% if radio.data.value %}
+          <label class="tipo-op">
+            {{ radio.tag }}
+            <span>
+              {% if radio.data.value == 'ENTRADA' %}
+                <strong>Llegó mercadería</strong><br><small>Entrada: compré más</small>
+              {% else %}
+                <strong>Se vendió o se usó</strong><br><small>Salida: ya no está en bodega</small>
+              {% endif %}
+            </span>
+          </label>
+          {% endif %}
+        {% endfor %}
+      </div>
+      {{ form.tipo.errors }}
+    </fieldset>
+
+    <div class="paso">
+      <label for="{{ form.motivo.id_for_label }}"><span class="num">3</span> ¿Por qué?</label>
+      {{ form.motivo }}
+      {{ form.motivo.errors }}
+    </div>
+
+    <div class="paso">
+      <label for="{{ form.cantidad.id_for_label }}"><span class="num">4</span> ¿Cuántas unidades?</label>
+      {{ form.cantidad }}
+      {{ form.cantidad.errors }}
+    </div>
+
+    <div class="mov-botones">
+      <button class="btn btn-grande" type="submit">Guardar</button>
+      <a class="btn btn-claro btn-grande" href="{% url 'inicio' %}">Cancelar</a>
+    </div>
+  </form>
+
+  <aside class="tarjeta mov-lado">
+    <h2>Así está este producto</h2>
+    <div id="lado-nombre" class="lado-nombre">Elige un producto</div>
+    <div class="fila"><span>Unidades que quedan</span><strong id="lado-stock">–</strong></div>
+    <div class="fila"><span>Avisar cuando queden</span><strong id="lado-minimo">–</strong></div>
+    <div class="fila"><span>Categoría</span><strong id="lado-categoria">–</strong></div>
+    <p class="lado-nota">Si registras una entrada, las unidades se suman. Si registras una salida, se restan. No puedes sacar más de las que hay.</p>
+  </aside>
+</div>
+
+<div id="datos-productos" hidden>
+  {% for p in form.fields.producto.queryset %}
+    <span data-id="{{ p.pk }}" data-nombre="{{ p.nombre }}" data-stock="{{ p.stock_actual }}" data-minimo="{{ p.stock_minimo }}" data-categoria="{{ p.categoria|default:'Sin grupo' }}"></span>
+  {% endfor %}
+</div>
+
+<script>
+  const select = document.getElementById('{{ form.producto.id_for_label }}');
+  function actualizarLado() {
+    const d = document.querySelector('#datos-productos [data-id="' + select.value + '"]');
+    document.getElementById('lado-nombre').textContent = d ? d.dataset.nombre : 'Elige un producto';
+    document.getElementById('lado-stock').textContent = d ? d.dataset.stock : '–';
+    document.getElementById('lado-minimo').textContent = d ? d.dataset.minimo : '–';
+    document.getElementById('lado-categoria').textContent = d ? d.dataset.categoria : '–';
+    const bajo = d && Number(d.dataset.stock) <= Number(d.dataset.minimo);
+    document.getElementById('lado-stock').style.color = bajo ? '#B5483F' : '';
+  }
+  select.addEventListener('change', actualizarLado);
+  actualizarLado();
+</script>
+{% endblock %}

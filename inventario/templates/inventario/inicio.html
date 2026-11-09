@@ -1,0 +1,43 @@
+{% extends 'inventario/base.html' %}
+{% block titulo %}Inicio{% endblock %}
+{% block contenido %}
+<h1 class="saludo">Hola, {{ user.username }}</h1>
+<p class="saludo-sub">¿Qué quieres hacer hoy? Elige una opción.</p>
+
+<div class="opciones">
+  <a class="opcion" href="{% url 'movimiento_crear' %}">
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#A85F66" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h13M16 3l4 4-4 4M17 17H4M8 13l-4 4 4 4"></path></svg>
+    <strong>Registrar entrada o salida</strong>
+    <span>Anota lo que llegó a la bodega o lo que se vendió o se usó, para que el stock siga al día.</span>
+  </a>
+  <a class="opcion" href="{% url 'home' %}">
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#A85F66" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>
+    <strong>Ver productos en bodega</strong>
+    <span>Busca un producto y revisa cuántas unidades quedan.</span>
+  </a>
+</div>
+
+<section class="tarjeta">
+  {% if por_acabarse %}
+    <h2 class="alerta-titulo">Se están acabando {{ por_acabarse|length }} producto{{ por_acabarse|length|pluralize }}</h2>
+    <p class="alerta-sub">Estos productos tienen pocas unidades. Conviene comprarlos pronto.</p>
+    <table>
+      <thead>
+        <tr><th>Producto</th><th>Categoría</th><th>Quedan</th><th>Avisar cuando queden</th></tr>
+      </thead>
+      <tbody>
+        {% for p in por_acabarse %}
+        <tr>
+          <td>{{ p.nombre }}</td>
+          <td>{{ p.categoria }}</td>
+          <td class="alerta">{{ p.stock_actual }} unidad{{ p.stock_actual|pluralize:"es" }}</td>
+          <td>{{ p.stock_minimo }} unidad{{ p.stock_minimo|pluralize:"es" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="ok">Por ahora no se está acabando nada.</p>
+  {% endif %}
+</section>
+{% endblock %}
