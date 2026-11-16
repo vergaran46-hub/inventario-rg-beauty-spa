@@ -147,6 +147,18 @@ class MovimientoTests(BaseTest):
         self.producto.refresh_from_db()
         self.assertEqual(self.producto.stock_actual, 6)
 
+    def test_salida_igual_al_stock_deja_cero(self):
+        self.assertEqual(self.mover('SALIDA', 10).status_code, 302)
+        self.producto.refresh_from_db()
+        self.assertEqual(self.producto.stock_actual, 0)
+
+    def test_segunda_salida_que_supera_el_stock_se_rechaza(self):
+        self.assertEqual(self.mover('SALIDA', 7).status_code, 302)
+        self.assertEqual(self.mover('SALIDA', 7).status_code, 200)
+        self.producto.refresh_from_db()
+        self.assertEqual(self.producto.stock_actual, 3)
+        self.assertEqual(Movimiento.objects.count(), 1)
+
     def test_salida_mayor_al_stock_se_rechaza(self):
         r = self.mover('SALIDA', 11)
         self.assertEqual(r.status_code, 200)
