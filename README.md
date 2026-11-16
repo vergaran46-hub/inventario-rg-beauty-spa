@@ -21,13 +21,37 @@ Proyecto de la asignatura Ingeniería de Software (INACAP, Copiapó).
    venv\Scripts\activate        (Windows)   |   source venv/bin/activate   (Linux/macOS)
    pip install -r requirements.txt
    ```
-2. Crear la base de datos y el usuario (editar antes la clave en el script):
-   ```
-   mysql -u root -p < database/crear_base_de_datos.sql
-   ```
-3. Definir las variables de entorno (ver `.env.example`). Mínimo `DB_PASSWORD`.
-   - Windows (PowerShell): `$env:DB_PASSWORD="su-clave"`
-   - Linux/macOS: `export DB_PASSWORD=su-clave`
+2. Crear la base de datos y el usuario de la aplicación.
+   - Guarda una copia de `database/crear_base_de_datos.sql` fuera del repositorio con el nombre `crear_base_local.sql`. Reemplaza `CAMBIAR_ESTA_CLAVE` por tu contraseña de MySQL para `inventario_app` en esa copia.
+   - Abre una terminal en la carpeta donde guardaste la copia. Ejecuta este comando y escribe la contraseña de `root` de MySQL cuando se solicite.
+
+     ```sh
+     mysql -u root -p -e "source crear_base_local.sql"
+     ```
+
+     Si PowerShell no encuentra `mysql`, usa `& 'C:\Program Files\MySQL\MySQL Server 8.4\bin\mysql.exe'` en su lugar y ajusta la ruta a tu instalación.
+   - El script crea la base `inventario_rg_beauty` y otorga a `inventario_app` permisos sobre ella. Django crea las tablas mediante las migraciones del paso 4.
+   - Comprueba la base y el acceso con la contraseña de `inventario_app`. El resultado debe mostrar `inventario_rg_beauty`.
+
+     ```sh
+     mysql -u inventario_app -p -D inventario_rg_beauty -e "SELECT DATABASE();"
+     ```
+
+3. Vuelve a la carpeta del repositorio y define `DB_PASSWORD` con la contraseña de `inventario_app` en la misma terminal donde ejecutarás Django. Consulta `.env.example` para ver las demás variables disponibles.
+   - En Windows (PowerShell), puedes ingresarla de forma oculta.
+
+     ```powershell
+     $env:DB_PASSWORD = [System.Net.NetworkCredential]::new('', (Read-Host 'Clave MySQL de inventario_app' -AsSecureString)).Password
+     ```
+
+   - En Linux/macOS (Bash o Zsh), ejecuta lo siguiente e ingresa la contraseña cuando la terminal espere tu entrada.
+
+     ```sh
+     read -rs DB_PASSWORD
+     export DB_PASSWORD
+     ```
+
+   - Si `migrate` devuelve `Access denied for user 'inventario_app'@'localhost' (1045)`, comprueba que `DB_PASSWORD` esté definida en esa terminal y coincida con la contraseña de la cuenta. Si el usuario ya existía, el script conserva su contraseña anterior.
 4. Crear las tablas y un administrador, y ejecutar:
    ```
    python manage.py migrate
@@ -40,7 +64,7 @@ Proyecto de la asignatura Ingeniería de Software (INACAP, Copiapó).
 ```
 python manage.py test
 ```
-(el usuario de la base necesita permiso para crear `test_inventario_rg_beauty`).
+Si MySQL devuelve el error `1044` al crear `test_inventario_rg_beauty`, una cuenta administradora debe otorgar a `inventario_app`, sobre esa base de pruebas, los mismos permisos que el script otorga sobre `inventario_rg_beauty`. Django crea y elimina la base temporal al ejecutar la suite.
 
 ## Estructura
 - `config/`: configuración del proyecto (settings, urls).
