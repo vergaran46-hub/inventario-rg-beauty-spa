@@ -213,3 +213,22 @@ class CabecerasSeguridadTests(BaseTest):
     def test_cabecera_anti_clickjacking(self):
         r = self.client.get(reverse('login'))
         self.assertEqual(r.headers.get('X-Frame-Options'), 'DENY')
+
+
+class CamposObligatoriosTests(BaseTest):
+    def test_formulario_de_producto_marca_los_obligatorios(self):
+        self.entrar()
+        r = self.client.get(reverse('producto_crear'))
+        self.assertContains(r, 'Campo obligatorio')
+        self.assertContains(r, 'class="obligatorio"')
+
+    def test_registro_de_movimiento_marca_los_obligatorios(self):
+        self.entrar()
+        r = self.client.get(reverse('movimiento_crear'))
+        self.assertContains(r, 'Campo obligatorio')
+        self.assertContains(r, 'marca-obligatorio', count=4)
+
+    def test_cambio_de_contrasena_marca_los_obligatorios(self):
+        self.entrar()
+        r = self.client.get(reverse('cambiar_password'))
+        self.assertContains(r, 'class="obligatorio"')
