@@ -45,21 +45,16 @@ def movimiento_crear(request):
         if form.is_valid():
             movimiento = form.save(commit=False)
             movimiento.usuario = request.user
+            producto = movimiento.producto
             with transaction.atomic():
-                producto = Producto.objects.select_for_update().get(pk=movimiento.producto_id)
-                if movimiento.tipo == 'SALIDA' and movimiento.cantidad > producto.stock_actual:
-                    form.add_error('cantidad', f'Hay {producto.stock_actual} unidades y se piden {movimiento.cantidad}.')
+                if movimiento.tipo == 'ENTRADA':
+                    producto.stock_actual += movimiento.cantidad
                 else:
-                    if movimiento.tipo == 'ENTRADA':
-                        producto.stock_actual += movimiento.cantidad
-                    else:
-                        producto.stock_actual -= movimiento.cantidad
-                    producto.save(update_fields=['stock_actual'])
-                    movimiento.save()
-                    seguridad.info('movimiento usuario=%s producto=%s tipo=%s cantidad=%s',
-                                   request.user.pk, producto.pk, movimiento.tipo, movimiento.cantidad)
-                    messages.success(request, f'Listo: ahora quedan {producto.stock_actual} unidades de {producto.nombre}.')
-                    return redirect('inicio')
+                    producto.stock_actual -= movimiento.cantidad
+                producto.save()
+                movimiento.save()
+            messages.success(request, f'Listo: ahora quedan {producto.stock_actual} unidades de {producto.nombre}.')
+            return redirect('inicio')
         messages.error(request, 'Revisa los datos del formulario.')
     else:
         form = MovimientoForm()
