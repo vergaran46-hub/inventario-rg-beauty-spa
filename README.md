@@ -60,6 +60,13 @@ Proyecto de la asignatura Ingeniería de Software (INACAP, Copiapó).
    ```
 5. Abrir http://127.0.0.1:8000/
 
+## Cuentas y roles
+
+- El registro público está activado por defecto. Para desactivarlo, define `DJANGO_REGISTRO_ABIERTO=False`.
+- Crea una cuenta administradora con `python manage.py createsuperuser`.
+- Desde el inventario, cada usuaria solo puede editar o eliminar sus propios productos.
+- Tras 5 intentos fallidos, el inicio de sesión se bloquea durante 15 minutos para esa combinación de usuario y dirección IP.
+
 ## Pruebas automatizadas
 ```
 python manage.py test
