@@ -1,6 +1,6 @@
 import re
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import PasswordChangeForm, UserCreationForm
 from django.contrib.auth.models import User
 from .models import Producto, Categoria, Etiqueta, Movimiento
 
@@ -10,6 +10,8 @@ MINIMO_AL_CREAR = 1
 
 
 class ProductoForm(forms.ModelForm):
+    required_css_class = 'obligatorio'
+
     class Meta:
         model = Producto
         fields = ['nombre', 'categoria', 'etiquetas', 'descripcion', 'stock_actual', 'stock_minimo']
@@ -71,6 +73,8 @@ class ProductoForm(forms.ModelForm):
 
 
 class RegistroForm(UserCreationForm):
+    required_css_class = 'obligatorio'
+
     email = forms.EmailField(label='Correo electrónico')
 
     class Meta(UserCreationForm.Meta):
@@ -85,6 +89,8 @@ class RegistroForm(UserCreationForm):
 
 
 class PerfilForm(forms.ModelForm):
+    required_css_class = 'obligatorio'
+
     class Meta:
         model = User
         fields = ['first_name', 'last_name', 'email']
@@ -102,6 +108,8 @@ class PerfilForm(forms.ModelForm):
 
 
 class MovimientoForm(forms.ModelForm):
+    required_css_class = 'obligatorio'
+
     class Meta:
         model = Movimiento
         fields = ['producto', 'tipo', 'motivo', 'cantidad']
@@ -132,6 +140,8 @@ class MovimientoForm(forms.ModelForm):
 
 
 class CategoriaForm(forms.ModelForm):
+    required_css_class = 'obligatorio'
+
     class Meta:
         model = Categoria
         fields = ['nombre']
@@ -147,6 +157,8 @@ class CategoriaForm(forms.ModelForm):
 
 
 class EtiquetaForm(forms.ModelForm):
+    required_css_class = 'obligatorio'
+
     class Meta:
         model = Etiqueta
         fields = ['nombre']
@@ -159,3 +171,7 @@ class EtiquetaForm(forms.ModelForm):
         if Etiqueta.objects.filter(nombre__iexact=nombre).exists():
             raise forms.ValidationError('Esa etiqueta ya existe.')
         return nombre
+
+
+class CambiarPasswordForm(PasswordChangeForm):
+    required_css_class = 'obligatorio'

@@ -13,7 +13,7 @@ from django.db import transaction
 from django.db.models import Q, ProtectedError
 from django.urls import reverse_lazy
 from .models import Producto, Categoria, Etiqueta, Movimiento
-from .forms import ProductoForm, RegistroForm, PerfilForm, CategoriaForm, EtiquetaForm, MovimientoForm
+from .forms import ProductoForm, RegistroForm, PerfilForm, CategoriaForm, EtiquetaForm, MovimientoForm, CambiarPasswordForm
 
 seguridad = logging.getLogger('inventario.seguridad')
 
@@ -247,6 +247,7 @@ def perfil(request):
 
 
 class CambiarPasswordView(SuccessMessageMixin, PasswordChangeView):
+    form_class = CambiarPasswordForm
     template_name = 'inventario/cambiar_password.html'
     success_url = reverse_lazy('perfil')
     success_message = 'Tu contraseña fue actualizada.'
