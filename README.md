@@ -51,7 +51,6 @@ Proyecto de la asignatura Ingeniería de Software (INACAP, Copiapó).
      export DB_PASSWORD
      ```
 
-   - Si `migrate` devuelve `Access denied for user 'inventario_app'@'localhost' (1045)`, comprueba que `DB_PASSWORD` esté definida en esa terminal y coincida con la contraseña de la cuenta. Si el usuario ya existía, el script conserva su contraseña anterior.
 4. Crear las tablas y un administrador, y ejecutar:
    ```
    python manage.py migrate
@@ -71,7 +70,13 @@ Proyecto de la asignatura Ingeniería de Software (INACAP, Copiapó).
 ```
 python manage.py test
 ```
-Si MySQL devuelve el error `1044` al crear `test_inventario_rg_beauty`, una cuenta administradora debe otorgar a `inventario_app`, sobre esa base de pruebas, los mismos permisos que el script otorga sobre `inventario_rg_beauty`. Django crea y elimina la base temporal al ejecutar la suite.
+Django crea y elimina la base temporal al ejecutar la suite.
+
+## Solución de problemas comunes
+
+- **`Access denied for user 'inventario_app'@'localhost'` (`1045`).** Comprueba que `DB_PASSWORD` esté definida en la terminal donde ejecutas Django y coincida con la contraseña de la cuenta. Si el usuario ya existía, el script conserva su contraseña anterior.
+- **Error `1044` al crear `test_inventario_rg_beauty`.** Una cuenta administradora de MySQL debe otorgar a `inventario_app`, sobre esa base de pruebas, los mismos permisos que el script otorga sobre `inventario_rg_beauty`.
+- **`ModuleNotFoundError` al ejecutar Django.** Activa el entorno virtual y ejecuta `pip install -r requirements.txt` como se indica en [Puesta en marcha](#puesta-en-marcha).
 
 ## Estructura
 - `config/`: configuración del proyecto (settings, urls).
