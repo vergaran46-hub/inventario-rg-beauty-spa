@@ -5,6 +5,7 @@
 <div class="tarjeta">
   <form method="post">
     {% csrf_token %}
+    <p class="leyenda-obligatorio"><span>*</span> Campo obligatorio</p>
     {{ form.as_p }}
     <button class="btn" type="submit">Registrarme</button>
     <a href="{% url 'login' %}">Ya tengo cuenta</a>

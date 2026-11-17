@@ -11,6 +11,7 @@
   </p>
   <form method="post">
     {% csrf_token %}
+    <p class="leyenda-obligatorio"><span>*</span> Campo obligatorio</p>
     {{ form_categoria.as_p }}
     <button class="btn" type="submit" name="guardar_categoria">Agregar grupo</button>
   </form>
@@ -23,6 +24,7 @@
   </p>
   <form method="post">
     {% csrf_token %}
+    <p class="leyenda-obligatorio"><span>*</span> Campo obligatorio</p>
     {{ form_etiqueta.as_p }}
     <button class="btn" type="submit" name="guardar_etiqueta">Agregar etiqueta</button>
   </form>

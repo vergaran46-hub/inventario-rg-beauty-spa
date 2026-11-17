@@ -7,6 +7,7 @@
   <p>¿No encuentras el grupo o la etiqueta? <a href="{% url 'grupos' %}">Créalos aquí</a> y vuelve a este formulario.</p>
   <form method="post">
     {% csrf_token %}
+    <p class="leyenda-obligatorio"><span>*</span> Campo obligatorio</p>
     {{ form.as_p }}
     <button class="btn" type="submit">Guardar</button>
     <a class="btn btn-claro" href="{% url 'home' %}">Cancelar</a>
